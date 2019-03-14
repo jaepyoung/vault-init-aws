@@ -29,6 +29,7 @@ var (
 	s3BucketName  string
 	httpClient    http.Client
 	kmsKeyId      string
+	awsregion     string 
 )
 
 // InitRequest holds a Vault init request.
@@ -60,6 +61,8 @@ type UnsealResponse struct {
 
 func main() {
 	log.Println("Starting the vault-init service...")
+
+	awsregion = os.Getenv("AWS_REGION")
 
 	vaultAddr = os.Getenv("VAULT_ADDR")
 	if vaultAddr == "" {
@@ -175,7 +178,9 @@ func initialize() {
 
 	log.Println("Encrypting unseal keys and the root token and uploading to bucket...")
 
-	AWSSession, err := session.NewSession()
+	conf := aws.Config{Region: aws.String(awsregion)}
+
+	AWSSession, err := session.NewSession(&conf)
 	if err != nil {
 		log.Println("Error creating session: ", err)
 	}
@@ -233,8 +238,9 @@ func initialize() {
 }
 
 func unseal() {
+	conf := aws.Config{Region: aws.String(awsregion)}
 
-	AWSSession, err := session.NewSession()
+	AWSSession, err := session.NewSession(&conf)
 	if err != nil {
 		log.Println("Error creating session: ", err)
 	}
